@@ -9,11 +9,11 @@ var PHPUnserialize = require('php-unserialize');
 var PHPSerialize = require('php-serialize');
 
 var debug = {
-	log: require('debug')('express-mysql-session:log'),
-	error: require('debug')('express-mysql-session:error')
+	log: require('debug')('express-mysql-php-session:log'),
+	error: require('debug')('express-mysql-php-session:error')
 };
 
-var deprecate = require('depd')('express-mysql-session');
+var deprecate = require('depd')('express-mysql-php-session');
 
 module.exports = function(session) {
 
@@ -149,12 +149,11 @@ module.exports = function(session) {
                 var session = '';
 
                 if (rows[0] && rows[0].data) {
-                    var dd = rows[0].data.replace(/^(.*)\|/, "");
+                    var raw_data = rows[0].data.replace(/^(.*)\|/, "");
 
-                    var d = PHPUnserialize.unserialize(dd);
-                    console.log("unserailized");
-                    console.log(d);
-                    session = rows[0] ? d : null;
+                    var data = PHPUnserialize.unserialize(raw_data);
+                    debug.log('Unserialized data: ', data);
+                    session = rows[0] ? data : null;
                 }
 
             } catch (error) {
@@ -167,6 +166,7 @@ module.exports = function(session) {
 	};
 
 	MySQLStore.prototype.set = function(session_id, data, cb) {
+
 
 		debug.log('Setting session:', session_id);
 
