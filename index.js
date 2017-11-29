@@ -5,6 +5,9 @@ var mysql = require('mysql');
 var path = require('path');
 var util = require('util');
 
+var PHPUnserialize = require('php-unserialize');
+var PHPSerialize = require('php-serialize');
+
 var debug = {
 	log: require('debug')('express-mysql-session:log'),
 	error: require('debug')('express-mysql-session:error')
@@ -143,8 +146,18 @@ module.exports = function(session) {
 			}
 
 			try {
-				var session = rows[0] ? JSON.parse(rows[0].data) : null;
-			} catch (error) {
+                var session = '';
+
+                if (rows[0] && rows[0].data) {
+                    var dd = rows[0].data.replace(/^(.*)\|/, "");
+
+                    var d = PHPUnserialize.unserialize(dd);
+                    console.log("unserailized");
+                    console.log(d);
+                    session = rows[0] ? d : null;
+                }
+
+            } catch (error) {
 				debug.error(error);
 				return cb(new Error('Failed to parse data for session:', session_id));
 			}
@@ -195,6 +208,22 @@ module.exports = function(session) {
 			this.options.schema.columnNames.data,
 			this.options.schema.columnNames.data
 		];
+
+        /**
+            //php-edit - use the following to save, now it is not used.
+
+         var sql = 'update ?? set  ?? = ? WHERE ?? = ? LIMIT 1';
+
+         console.log("updating with " + data);
+
+         var params = [
+         this.options.schema.tableName,
+         this.options.schema.columnNames.data,
+         PHPSerialize.serialize(data),
+         this.options.schema.columnNames.session_id,
+         session_id
+         ];
+         */
 
 		this.connection.query(sql, params, function(error) {
 
